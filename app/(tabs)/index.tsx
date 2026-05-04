@@ -1,85 +1,91 @@
-import { useEffect, useState } from "react";
-import { View, Text, FlatList } from "react-native";
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Betting Pro</title>
+    <style>
+        body {
+            background: #0d0d0d;
+            color: white;
+            font-family: Arial;
+            padding: 20px;
+        }
 
-export default function Home() {
-  const [matches, setMatches] = useState([]);
+        h1 {
+            text-align: center;
+        }
 
-  useEffect(() => {
-    fetch("http://192.168.1.22:5000/matches")
-      .then(res => res.json())
-      .then(data => setMatches(data))
-      .catch(err => console.log(err));
-  }, []);
+        .card {
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px auto;
+            width: 90%;
+            max-width: 500px;
+            background: #1a1a1a;
+        }
 
-  const renderMatch = ({ item }) => {
-    const isHot = item.decision === "NEXT GOAL";
-    const isBad = item.decision === "NO BET";
+        .green {
+            border: 2px solid #00ff00;
+        }
 
-    return (
-      <View
-        style={{
-          margin: 10,
-          padding: 15,
-          borderRadius: 15,
-          borderWidth: 2,
-          borderColor: isHot ? "lime" : isBad ? "red" : "gray",
-          backgroundColor: "#111"
-        }}
-      >
-        <Text style={{ color: "white", fontSize: 18 }}>
-          {item.home} vs {item.away}
-        </Text>
+        .red {
+            border: 2px solid red;
+        }
 
-        <Text style={{ color: "white" }}>Score: {item.score}</Text>
-        <Text style={{ color: "white" }}>Minute: {item.minute}</Text>
+        .title {
+            font-size: 20px;
+            font-weight: bold;
+        }
 
-        <Text style={{ color: "cyan" }}>📊 Shots: {item.shots}</Text>
-        <Text style={{ color: "cyan" }}>📈 xG: {item.xg}</Text>
+        .highlight {
+            color: #00ffff;
+        }
 
-        <Text style={{ color: "orange" }}>
-          🎯 Goal Probability: {item.prob_goal}%
-        </Text>
+        .goal {
+            color: orange;
+        }
 
-        <Text style={{ color: "yellow" }}>
-          ⚡ Intensity: {item.intensity}
-        </Text>
+        .decision {
+            font-size: 22px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
 
-        <Text style={{ color: "gold" }}>
-          💰 Value: {item.value}
-        </Text>
+        .confidence {
+            color: lightgray;
+        }
+    </style>
+</head>
 
-        <Text
-          style={{
-            color: isHot ? "lime" : isBad ? "red" : "white",
-            fontSize: 20,
-            marginTop: 10
-          }}
-        >
-          🔥 {item.decision}
-        </Text>
+<body>
 
-        <Text style={{ color: "white" }}>
-          🎯 Confidence: {item.confidence}%
-        </Text>
+<h1>🔥 AI BETTING PRO</h1>
 
-        <Text style={{ color: "gray" }}>
-          🧠 {item.reason}
-        </Text>
-      </View>
-    );
-  };
+{% for m in matches %}
+<div class="card {{ 'green' if m.decision == 'NEXT GOAL' else 'red' }}">
+    
+    <div class="title">{{ m.home }} vs {{ m.away }}</div>
 
-  return (
-    <View style={{ flex: 1, backgroundColor: "black", paddingTop: 50 }}>
-      <Text style={{ color: "white", fontSize: 22, textAlign: "center" }}>
-        ⚽ AI BETTING ELITE 🔥
-      </Text>
+    <p>Score: {{ m.score }}</p>
+    <p>Minute: {{ m.minute }}</p>
 
-      <FlatList
-        data={matches}
-        renderItem={renderMatch}
-        keyExtractor={(item, index) => index.toString()}
-      />
-    </View>
-  );
-}
+    <p class="highlight">Shots: {{ m.shots }}</p>
+    <p class="highlight">xG: {{ m.xg }}</p>
+
+    <p class="goal">Goal Probability: {{ m.prob_goal }}%</p>
+
+    <div class="decision">
+        {% if m.decision == "NEXT GOAL" %}
+            🔥 NEXT GOAL
+        {% else %}
+            ❌ NO BET
+        {% endif %}
+    </div>
+
+    <p class="confidence">Confidence: {{ m.confidence }}%</p>
+    <p>🧠 {{ m.reason }}</p>
+
+</div>
+{% endfor %}
+
+</body>
+</html>
