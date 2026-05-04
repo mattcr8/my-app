@@ -1,56 +1,64 @@
 from flask import Flask, jsonify, render_template
-import random
 
 app = Flask(__name__)
 
-# Fake data (remplacable par API plus tard)
+# IA simple basée sur stats
+def analyze_match(home, away, score, minute, shots, xg):
+    shots_home, shots_away = map(int, shots.split("-"))
+
+    intensity = float(xg) + (shots_home + shots_away) / 10
+
+    prob = min(95, max(30, int(intensity * 20)))
+
+    if prob > 70:
+        decision = "NEXT GOAL"
+        confidence = min(95, prob)
+        reason = "High pressure + strong xG"
+    else:
+        decision = "NO BET"
+        confidence = prob
+        reason = "Low intensity"
+
+    return prob, decision, confidence, reason
+
+
 def generate_matches():
-    return [
-        {
-            "home": "Real Madrid",
-            "away": "Barcelona",
-            "score": "1-1",
-            "minute": 55,
-            "shots": "10-8",
-            "xg": 2.1,
-            "prob": random.randint(75, 95),
-            "confidence": 90,
-            "decision": "NEXT GOAL",
-            "reason": "High pressure + strong xG"
-        },
-        {
-            "home": "PSG",
-            "away": "Marseille",
-            "score": "2-0",
-            "minute": 60,
-            "shots": "12-5",
-            "xg": 2.5,
-            "prob": random.randint(80, 95),
-            "confidence": 90,
-            "decision": "NEXT GOAL",
-            "reason": "Dominating game"
-        },
-        {
-            "home": "Liverpool",
-            "away": "Chelsea",
-            "score": "0-0",
-            "minute": 30,
-            "shots": "5-4",
-            "xg": 0.8,
-            "prob": random.randint(30, 60),
-            "confidence": 40,
-            "decision": "NO BET",
-            "reason": "Low intensity"
-        }
+    base_matches = [
+        ("Real Madrid", "Barcelona", "1-1", 55, "10-8", 2.1),
+        ("PSG", "Marseille", "2-0", 60, "12-5", 2.5),
+        ("Liverpool", "Chelsea", "0-0", 30, "5-4", 0.8),
     ]
+
+    results = []
+
+    for m in base_matches:
+        prob, decision, confidence, reason = analyze_match(*m)
+
+        results.append({
+            "home": m[0],
+            "away": m[1],
+            "score": m[2],
+            "minute": m[3],
+            "shots": m[4],
+            "xg": m[5],
+            "prob": prob,
+            "decision": decision,
+            "confidence": confidence,
+            "reason": reason
+        })
+
+    return results
+
 
 @app.route("/")
 def home():
     return render_template("index.html")
 
+
 @app.route("/matches")
 def matches():
     return jsonify(generate_matches())
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

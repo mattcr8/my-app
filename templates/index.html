@@ -15,11 +15,16 @@
             margin-top: 30px;
         }
 
+        #loading {
+            margin-top: 20px;
+            color: orange;
+        }
+
         .card {
             border-radius: 15px;
             padding: 20px;
             margin: 20px auto;
-            width: 300px;
+            width: 320px;
             box-shadow: 0 0 20px rgba(0,255,200,0.2);
             transition: 0.3s;
         }
@@ -28,8 +33,13 @@
             transform: scale(1.05);
         }
 
-        .green { border: 2px solid #00ff99; }
-        .red { border: 2px solid red; }
+        .green {
+            border: 2px solid #00ff99;
+        }
+
+        .red {
+            border: 2px solid red;
+        }
 
         .prob {
             color: orange;
@@ -52,17 +62,23 @@
 
 <h1>🔥 AI BETTING PRO 🔥</h1>
 
+<div id="loading">Loading AI predictions...</div>
 <div id="matches"></div>
 
 <script>
 
 function loadMatches() {
+
+    document.getElementById("loading").style.display = "block";
+
     fetch("/matches")
     .then(res => res.json())
     .then(data => {
 
         const container = document.getElementById("matches");
         container.innerHTML = "";
+
+        document.getElementById("loading").style.display = "none";
 
         data.forEach(m => {
 
@@ -93,10 +109,10 @@ function loadMatches() {
     });
 }
 
-// Chargement initial
+// chargement initial
 loadMatches();
 
-// Refresh auto toutes les 10 secondes
+// refresh auto toutes les 10 secondes
 setInterval(loadMatches, 10000);
 
 </script>
