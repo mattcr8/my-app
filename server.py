@@ -9,7 +9,7 @@ API_KEY = os.environ.get("ODDS_API_KEY")
 
 def get_odds():
     url = f"https://api.the-odds-api.com/v4/sports/soccer_epl/odds/?apiKey={API_KEY}&regions=eu&markets=h2h"
-    
+
     try:
         response = requests.get(url)
         data = response.json()
@@ -44,7 +44,6 @@ def index():
 @app.route("/matches")
 def matches():
 
-    # FAKE LIVE DATA (remplaçable plus tard)
     matches = [
         {"home":"Real Madrid","away":"Barcelona","minute":55,"shots":10,"xg":2.1,"score":"1-1"},
         {"home":"PSG","away":"Marseille","minute":60,"shots":12,"xg":2.5,"score":"2-0"},
@@ -60,16 +59,19 @@ def matches():
         best_odds = odds_data.get(key, 2.0)
 
         implied = 1 / best_odds
-        value = round((prob/100) / implied, 2)
+        real_prob = prob / 100
+
+        value = round(real_prob / implied, 2)
+
+        if value > 1.25:
+            decision = "🔥 STRONG BET"
+        elif value > 1.05:
+            decision = "⚠️ MEDIUM BET"
+        else:
+            decision = "❌ NO BET"
 
         m["prob"] = prob
-        m["confidence"] = prob
-
-        if value > 1.2:
-            m["decision"] = "NEXT GOAL"
-        else:
-            m["decision"] = "NO BET"
-
+        m["decision"] = decision
         m["best_odds"] = best_odds
         m["value"] = value
 

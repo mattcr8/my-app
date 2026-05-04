@@ -13,10 +13,10 @@ body {
     border-radius: 10px;
 }
 
-.red {
-    border-color: red;
-}
-
 .green {
     border-color: #00ffcc;
+}
+
+.red {
+    border-color: red;
 }

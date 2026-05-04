@@ -8,7 +8,8 @@ async function loadMatches() {
     data.forEach(m => {
         const div = document.createElement("div");
 
-        div.className = "card " + (m.decision === "NEXT GOAL" ? "green" : "red");
+        div.className = "card " + 
+            (m.decision.includes("BET") ? "green" : "red");
 
         div.innerHTML = `
             <h2>${m.home} vs ${m.away}</h2>
@@ -28,5 +29,5 @@ async function loadMatches() {
     });
 }
 
-// 🔥 IMPORTANT : UNE SEULE FOIS AU LOAD
+// ✅ REFRESH UNIQUEMENT AU LANCEMENT
 loadMatches();

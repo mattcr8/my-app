@@ -1,16 +1,22 @@
 import pandas as pd
+import numpy as np
 from xgboost import XGBClassifier
 
-data = pd.DataFrame([
-    [2.1, 10, 55, 1],
-    [2.5, 12, 60, 1],
-    [0.8, 5, 30, 0],
-    [1.2, 7, 40, 0],
-    [3.0, 15, 70, 1],
-    [0.5, 3, 20, 0]
-], columns=["xg", "shots", "minute", "goal"])
+rows = []
 
-X = data[["xg", "shots", "minute"]]
+for i in range(5000):
+    xg = np.random.uniform(0.2, 3.5)
+    shots = np.random.randint(1, 20)
+    minute = np.random.randint(1, 90)
+
+    prob = (xg * 0.4 + shots * 0.03 + minute * 0.01)
+    goal = 1 if prob > 1.5 else 0
+
+    rows.append([xg, shots, minute, goal])
+
+data = pd.DataFrame(rows, columns=["xg","shots","minute","goal"])
+
+X = data[["xg","shots","minute"]]
 y = data["goal"]
 
 model = XGBClassifier()
