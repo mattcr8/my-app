@@ -1,7 +1,9 @@
 from flask import Flask, jsonify, render_template
+import random
 
 app = Flask(__name__)
 
+# Fake data (remplacable par API plus tard)
 def generate_matches():
     return [
         {
@@ -11,9 +13,9 @@ def generate_matches():
             "minute": 55,
             "shots": "10-8",
             "xg": 2.1,
-            "prob": 82,
-            "decision": "NEXT GOAL",
+            "prob": random.randint(75, 95),
             "confidence": 90,
+            "decision": "NEXT GOAL",
             "reason": "High pressure + strong xG"
         },
         {
@@ -23,9 +25,9 @@ def generate_matches():
             "minute": 60,
             "shots": "12-5",
             "xg": 2.5,
-            "prob": 88,
-            "decision": "NEXT GOAL",
+            "prob": random.randint(80, 95),
             "confidence": 90,
+            "decision": "NEXT GOAL",
             "reason": "Dominating game"
         },
         {
@@ -35,9 +37,9 @@ def generate_matches():
             "minute": 30,
             "shots": "5-4",
             "xg": 0.8,
-            "prob": 45,
-            "decision": "NO BET",
+            "prob": random.randint(30, 60),
             "confidence": 40,
+            "decision": "NO BET",
             "reason": "Low intensity"
         }
     ]
