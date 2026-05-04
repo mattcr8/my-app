@@ -1,75 +1,79 @@
-from flask import Flask, jsonify, render_template
+from flask import Flask, render_template, jsonify
 import requests
-import random
 import os
+from model import predict_goal
 
 app = Flask(__name__)
 
 API_KEY = os.environ.get("ODDS_API_KEY")
 
-def get_matches():
+def get_odds():
+    url = f"https://api.the-odds-api.com/v4/sports/soccer_epl/odds/?apiKey={API_KEY}&regions=eu&markets=h2h"
+    
     try:
-        if not API_KEY:
-            raise Exception("API KEY manquante")
-
-        url = f"https://api.the-odds-api.com/v4/sports/soccer_epl/odds/?apiKey={API_KEY}&regions=eu&markets=h2h"
-        response = requests.get(url, timeout=10)
+        response = requests.get(url)
         data = response.json()
 
-        matches = []
+        odds_data = {}
 
-        for game in data[:5]:  # limite pour rester gratuit
-            home = game["home_team"]
-            away = game["away_team"]
+        for match in data:
+            home = match["home_team"]
+            away = match["away_team"]
 
-            odds_list = []
+            bookmakers = match.get("bookmakers", [])
 
-            for bookmaker in game.get("bookmakers", []):
-                for market in bookmaker.get("markets", []):
-                    for outcome in market.get("outcomes", []):
-                        if outcome["name"] == home:
-                            odds_list.append(outcome["price"])
+            odds = []
 
-            if not odds_list:
-                continue
+            for book in bookmakers:
+                for market in book["markets"]:
+                    for outcome in market["outcomes"]:
+                        odds.append(outcome["price"])
 
-            best_odds = max(odds_list)
+            if odds:
+                odds_data[f"{home}-{away}"] = max(odds)
 
-            # IA simple gratuite (pas de dataset)
-            prob = random.randint(55, 75)
+        return odds_data
 
-            value = round((prob / 100) * best_odds, 2)
-
-            decision = "VALUE BET" if value > 1 else "NO BET"
-
-            matches.append({
-                "home": home,
-                "away": away,
-                "prob": prob,
-                "decision": decision,
-                "best_odds": best_odds,
-                "value": value
-            })
-
-        return matches
-
-    except Exception as e:
-        print("API ERROR:", e)
-
-        # fallback si API down ou quota dépassé
-        return [
-            {"home": "Real Madrid", "away": "Barcelona", "prob": 70, "decision": "VALUE BET", "best_odds": 2.1, "value": 1.47},
-            {"home": "PSG", "away": "Marseille", "prob": 65, "decision": "VALUE BET", "best_odds": 1.9, "value": 1.23},
-            {"home": "Liverpool", "away": "Chelsea", "prob": 50, "decision": "NO BET", "best_odds": 2.0, "value": 1.0}
-        ]
+    except:
+        return {}
 
 @app.route("/")
-def home():
+def index():
     return render_template("index.html")
 
 @app.route("/matches")
 def matches():
-    return jsonify(get_matches())
+
+    # FAKE LIVE DATA (remplaçable plus tard)
+    matches = [
+        {"home":"Real Madrid","away":"Barcelona","minute":55,"shots":10,"xg":2.1,"score":"1-1"},
+        {"home":"PSG","away":"Marseille","minute":60,"shots":12,"xg":2.5,"score":"2-0"},
+        {"home":"Liverpool","away":"Chelsea","minute":30,"shots":5,"xg":0.8,"score":"0-0"}
+    ]
+
+    odds_data = get_odds()
+
+    for m in matches:
+        prob = predict_goal(m["xg"], m["shots"], m["minute"])
+
+        key = f"{m['home']}-{m['away']}"
+        best_odds = odds_data.get(key, 2.0)
+
+        implied = 1 / best_odds
+        value = round((prob/100) / implied, 2)
+
+        m["prob"] = prob
+        m["confidence"] = prob
+
+        if value > 1.2:
+            m["decision"] = "NEXT GOAL"
+        else:
+            m["decision"] = "NO BET"
+
+        m["best_odds"] = best_odds
+        m["value"] = value
+
+    return jsonify(matches)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
