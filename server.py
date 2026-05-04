@@ -1,25 +1,48 @@
 from flask import Flask, jsonify, render_template
+import random
 
 app = Flask(__name__)
 
-# IA simple basée sur stats
-def analyze_match(home, away, score, minute, shots, xg):
+def advanced_ai(home, away, score, minute, shots, xg):
+
     shots_home, shots_away = map(int, shots.split("-"))
+    goals_home, goals_away = map(int, score.split("-"))
 
-    intensity = float(xg) + (shots_home + shots_away) / 10
+    total_shots = shots_home + shots_away
+    shot_diff = shots_home - shots_away
+    goal_diff = goals_home - goals_away
 
-    prob = min(95, max(30, int(intensity * 20)))
+    pressure = total_shots / max(1, minute)
+    dominance = shot_diff * 0.5 + xg
+    urgency = 1 if goal_diff == 0 else 0.7
+
+    score_ai = (pressure * 30) + (dominance * 20) + (urgency * 10)
+    score_ai += random.randint(-10, 10)
+
+    prob = max(20, min(95, int(score_ai)))
 
     if prob > 70:
         decision = "NEXT GOAL"
-        confidence = min(95, prob)
-        reason = "High pressure + strong xG"
+        confidence = prob
     else:
         decision = "NO BET"
         confidence = prob
-        reason = "Low intensity"
 
-    return prob, decision, confidence, reason
+    return prob, decision, confidence
+
+
+def generate_odds():
+    return {
+        "winamax": round(random.uniform(1.5, 3.0), 2),
+        "betclic": round(random.uniform(1.5, 3.0), 2),
+        "unibet": round(random.uniform(1.5, 3.0), 2),
+    }
+
+
+def calculate_value(prob, odds):
+    best_odds = max(odds.values())
+    value = (prob / 100 * best_odds) - 1
+    return round(value, 2), best_odds
 
 
 def generate_matches():
@@ -32,7 +55,10 @@ def generate_matches():
     results = []
 
     for m in base_matches:
-        prob, decision, confidence, reason = analyze_match(*m)
+
+        prob, decision, confidence = advanced_ai(*m)
+        odds = generate_odds()
+        value, best_odds = calculate_value(prob, odds)
 
         results.append({
             "home": m[0],
@@ -44,7 +70,9 @@ def generate_matches():
             "prob": prob,
             "decision": decision,
             "confidence": confidence,
-            "reason": reason
+            "odds": odds,
+            "best_odds": best_odds,
+            "value": value
         })
 
     return results

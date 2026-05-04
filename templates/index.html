@@ -11,10 +11,6 @@
             text-align: center;
         }
 
-        h1 {
-            margin-top: 30px;
-        }
-
         #loading {
             margin-top: 20px;
             color: orange;
@@ -45,16 +41,6 @@
             color: orange;
             font-weight: bold;
         }
-
-        .decision-green {
-            color: #00ff99;
-            font-size: 20px;
-        }
-
-        .decision-red {
-            color: red;
-            font-size: 20px;
-        }
     </style>
 </head>
 
@@ -82,26 +68,37 @@ function loadMatches() {
 
         data.forEach(m => {
 
-            const div = document.createElement("div");
-
             const isGreen = m.decision === "NEXT GOAL";
 
+            const div = document.createElement("div");
             div.className = "card " + (isGreen ? "green" : "red");
 
             div.innerHTML = `
                 <h2>${m.home} vs ${m.away}</h2>
+
                 <p>Score: ${m.score} | ${m.minute} min</p>
                 <p>Shots: ${m.shots}</p>
                 <p>xG: ${m.xg}</p>
 
                 <p class="prob">Goal Probability: ${m.prob}%</p>
 
-                <h3 class="${isGreen ? 'decision-green' : 'decision-red'}">
+                <h3 style="color:${isGreen ? '#00ff99' : 'red'}">
                     ${isGreen ? '🔥 NEXT GOAL' : '❌ NO BET'}
                 </h3>
 
                 <p>Confidence: ${m.confidence}%</p>
-                <p>${m.reason}</p>
+
+                <hr>
+
+                <p>Winamax: ${m.odds.winamax}</p>
+                <p>Betclic: ${m.odds.betclic}</p>
+                <p>Unibet: ${m.odds.unibet}</p>
+
+                <p>Best odds: ${m.best_odds}</p>
+
+                <p style="color:${m.value > 0 ? 'lime' : 'red'}">
+                    VALUE: ${m.value}
+                </p>
             `;
 
             container.appendChild(div);
@@ -109,10 +106,7 @@ function loadMatches() {
     });
 }
 
-// chargement initial
 loadMatches();
-
-// refresh auto toutes les 10 secondes
 setInterval(loadMatches, 10000);
 
 </script>
