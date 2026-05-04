@@ -1,92 +1,176 @@
 from flask import Flask, jsonify, render_template
+import requests
+import time
 import random
 
 app = Flask(__name__)
 
-def advanced_ai(home, away, score, minute, shots, xg):
+# 🔑 TES CLÉS API
+ODDS_API_KEY = "TA_CLE_ODDS"
+FOOTBALL_API_KEY = "TA_CLE_API_FOOTBALL"
 
-    shots_home, shots_away = map(int, shots.split("-"))
-    goals_home, goals_away = map(int, score.split("-"))
+# -----------------------------
+# CACHE (économie crédits)
+# -----------------------------
+cache_data = None
+cache_time = 0
 
-    total_shots = shots_home + shots_away
-    shot_diff = shots_home - shots_away
-    goal_diff = goals_home - goals_away
+# -----------------------------
+# API FOOTBALL (matchs)
+# -----------------------------
+def get_matches():
 
-    pressure = total_shots / max(1, minute)
-    dominance = shot_diff * 0.5 + xg
-    urgency = 1 if goal_diff == 0 else 0.7
+    url = "https://v3.football.api-sports.io/fixtures?live=all"
 
-    score_ai = (pressure * 30) + (dominance * 20) + (urgency * 10)
-    score_ai += random.randint(-10, 10)
-
-    prob = max(20, min(95, int(score_ai)))
-
-    if prob > 70:
-        decision = "NEXT GOAL"
-        confidence = prob
-    else:
-        decision = "NO BET"
-        confidence = prob
-
-    return prob, decision, confidence
-
-
-def generate_odds():
-    return {
-        "winamax": round(random.uniform(1.5, 3.0), 2),
-        "betclic": round(random.uniform(1.5, 3.0), 2),
-        "unibet": round(random.uniform(1.5, 3.0), 2),
+    headers = {
+        "x-apisports-key": FOOTBALL_API_KEY
     }
 
+    res = requests.get(url, headers=headers)
+    data = res.json()
 
-def calculate_value(prob, odds):
+    matches = []
+
+    for m in data.get("response", [])[:5]:
+
+        home = m["teams"]["home"]["name"]
+        away = m["teams"]["away"]["name"]
+
+        minute = m["fixture"]["status"]["elapsed"] or 0
+
+        # FAKE stats (à améliorer plus tard)
+        shots = f"{random.randint(3,12)}-{random.randint(3,12)}"
+        xg = round(random.uniform(0.5, 2.5), 2)
+
+        matches.append({
+            "home": home,
+            "away": away,
+            "minute": minute,
+            "shots": shots,
+            "xg": xg
+        })
+
+    return matches
+
+
+# -----------------------------
+# API ODDS
+# -----------------------------
+def get_odds():
+
+    url = f"https://api.the-odds-api.com/v4/sports/soccer_epl/odds/?apiKey={ODDS_API_KEY}&regions=eu&markets=h2h"
+
+    res = requests.get(url)
+    data = res.json()
+
+    odds_map = {}
+
+    for game in data[:10]:
+        match_key = f"{game['home_team']} vs {game['away_team']}"
+
+        odds = {}
+
+        for b in game.get("bookmakers", []):
+            name = b["title"].lower()
+
+            if name in ["unibet", "betclic", "winamax"]:
+                try:
+                    odds[name] = b["markets"][0]["outcomes"][0]["price"]
+                except:
+                    pass
+
+        if odds:
+            odds_map[match_key] = odds
+
+    return odds_map
+
+
+# -----------------------------
+# IA + VALUE
+# -----------------------------
+def analyze(match, odds):
+
+    shots_home, shots_away = map(int, match["shots"].split("-"))
+    total_shots = shots_home + shots_away
+
+    pressure = total_shots / max(1, match["minute"])
+    dominance = match["xg"]
+
+    prob = min(95, max(20, int((pressure * 40) + (dominance * 20))))
+
     best_odds = max(odds.values())
+
     value = (prob / 100 * best_odds) - 1
-    return round(value, 2), best_odds
+
+    if value > 0:
+        decision = "VALUE BET"
+    else:
+        decision = "NO BET"
+
+    return prob, decision, round(value, 2), best_odds
 
 
-def generate_matches():
-    base_matches = [
-        ("Real Madrid", "Barcelona", "1-1", 55, "10-8", 2.1),
-        ("PSG", "Marseille", "2-0", 60, "12-5", 2.5),
-        ("Liverpool", "Chelsea", "0-0", 30, "5-4", 0.8),
-    ]
+# -----------------------------
+# STACK COMPLET
+# -----------------------------
+def build_data():
+
+    matches = get_matches()
+    odds_map = get_odds()
 
     results = []
 
-    for m in base_matches:
+    for m in matches:
 
-        prob, decision, confidence = advanced_ai(*m)
-        odds = generate_odds()
-        value, best_odds = calculate_value(prob, odds)
+        key = f"{m['home']} vs {m['away']}"
+
+        if key not in odds_map:
+            continue
+
+        odds = odds_map[key]
+
+        prob, decision, value, best_odds = analyze(m, odds)
 
         results.append({
-            "home": m[0],
-            "away": m[1],
-            "score": m[2],
-            "minute": m[3],
-            "shots": m[4],
-            "xg": m[5],
+            "home": m["home"],
+            "away": m["away"],
+            "minute": m["minute"],
+            "shots": m["shots"],
+            "xg": m["xg"],
             "prob": prob,
             "decision": decision,
-            "confidence": confidence,
+            "value": value,
             "odds": odds,
-            "best_odds": best_odds,
-            "value": value
+            "best_odds": best_odds
         })
 
     return results
 
 
+# -----------------------------
+# CACHE WRAPPER
+# -----------------------------
+def get_data_cached():
+    global cache_data, cache_time
+
+    if time.time() - cache_time < 60:
+        return cache_data
+
+    cache_data = build_data()
+    cache_time = time.time()
+
+    return cache_data
+
+
+# -----------------------------
 @app.route("/")
 def home():
     return render_template("index.html")
 
-
 @app.route("/matches")
 def matches():
-    return jsonify(generate_matches())
+    return jsonify(get_data_cached())
 
-
+# -----------------------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
