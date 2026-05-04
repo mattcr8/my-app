@@ -1,60 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
-	<title></title>
-	<meta name="generator" content="LibreOffice 24.2.4.2 (Windows)"/>
-	<meta name="created" content="2026-05-04T16:05:05.747000000"/>
-	<meta name="changed" content="2026-05-04T16:05:13.240000000"/>
+  <title>AI Betting Pro</title>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
-<body lang="fr-FR" dir="ltr"><p>&lt;!DOCTYPE html&gt;</p>
-<p>&lt;html&gt;</p>
-<p>&lt;head&gt;</p>
-<p>    &lt;title&gt;AI Betting Pro&lt;/title&gt;</p>
-<p>&lt;/head&gt;</p>
-<p>&lt;body style=&quot;background:black;color:white;font-family:Arial&quot;&gt;</p>
-<p><br/>
-<br/>
 
-</p>
-<p>&lt;h1&gt;🔥 AI BETTING PRO&lt;/h1&gt;</p>
-<p><br/>
-<br/>
+<body>
 
-</p>
-<p>{% for m in matches %}</p>
-<p>&lt;div style=&quot;border:2px solid {{ 'green' if
-m.decision=='NEXT GOAL' else 'red' }}; padding:20px; margin:20px;
-border-radius:10px&quot;&gt;</p>
-<p><br/>
-<br/>
+<h1>🔥 AI BETTING PRO 🔥</h1>
 
-</p>
-<p>&lt;h2&gt;{{ m.home }} vs {{ m.away }}&lt;/h2&gt;</p>
-<p><br/>
-<br/>
+<div id="matches"></div>
 
-</p>
-<p>&lt;p&gt;Score: {{ m.score }}&lt;/p&gt;</p>
-<p>&lt;p&gt;Minute: {{ m.minute }}&lt;/p&gt;</p>
-<p>&lt;p&gt;Shots: {{ m.shots }}&lt;/p&gt;</p>
-<p>&lt;p&gt;xG: {{ m.xg }}&lt;/p&gt;</p>
-<p><br/>
-<br/>
+<script src="/static/app.js"></script>
 
-</p>
-<p>&lt;h3&gt;{{ m.decision }}&lt;/h3&gt;</p>
-<p><br/>
-<br/>
-
-</p>
-<p>&lt;/div&gt;</p>
-<p>{% endfor %}</p>
-<p><br/>
-<br/>
-
-</p>
-<p>&lt;/body&gt;</p>
-<p>&lt;/html&gt;</p>
 </body>
 </html>
