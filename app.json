@@ -7,6 +7,9 @@
       "eas": {
         "projectId": "ae597cba-9555-4d69-9196-8b28d7bf8ce7"
       }
+    },
+    "android": {
+      "package": "com.mattcr.myapp"
     }
   }
 }
